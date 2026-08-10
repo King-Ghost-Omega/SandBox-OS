@@ -1,1 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SandBox-OS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+    <!-- Área de Trabalho -->
+    <div id="desktop">
+        <div class="shortcut" onclick="openApp('notepad')">📝 Bloco de Notas</div>
+        
+        <!-- Janela do Aplicativo -->
+        <div id="win-notepad" class="window" style="display: none;">
+            <div class="window-header" id="win-notepad-header">
+                <span>Bloco de Notas</span>
+                <button onclick="closeApp('notepad')">X</button>
+            </div>
+            <div class="window-content">
+                <textarea placeholder="Digite algo aqui..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de Tarefas -->
+    <div id="taskbar">
+        <button id="start-menu-btn">🌐 Iniciar</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
