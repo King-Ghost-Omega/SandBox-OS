@@ -16,6 +16,12 @@
             <span class="shortcut-icon">📝</span>
             <span>Bloco de Notas</span>
         </div>
+
+        <!-- Ícone de Configurações -->
+        <div class="shortcut" onclick="openApp('settings')">
+            <span class="shortcut-icon">⚙️</span>
+            <span>Configurações</span>
+        </div>
         
         <!-- Janela do Bloco de Notas -->
         <div id="win-notepad" class="window" style="display: none; top: 15%; left: 20%;">
@@ -27,6 +33,35 @@
             </div>
             <div class="window-content">
                 <textarea placeholder="Digite suas anotações aqui..."></textarea>
+            </div>
+        </div>
+
+        <!-- Janela de Configurações -->
+        <div id="win-settings" class="window" style="display: none; top: 20%; left: 30%; width: 450px; height: 350px;">
+            <div class="window-header" id="win-settings-header">
+                <span class="window-title">Configurações</span>
+                <div class="window-controls">
+                    <button class="close-btn" onclick="closeApp('settings')">✕</button>
+                </div>
+            </div>
+            <div class="window-content settings-layout">
+                <!-- Menu Lateral de Opções (Fácil de expandir depois) -->
+                <div class="settings-sidebar">
+                    <button class="active">🖼️ Fundo</button>
+                </div>
+                <!-- Conteúdo da Opção Selecionada -->
+                <div class="settings-body">
+                    <h3>Cor de Fundo</h3>
+                    <p>Escolha uma cor para a sua área de trabalho:</p>
+                    <div class="color-picker-grid">
+                        <div class="color-ball color-blue" onclick="changeBackground('#2a4d69')"></div>
+                        <div class="color-ball color-purple" onclick="changeBackground('#4b357a')"></div>
+                        <div class="color-ball color-dark" onclick="changeBackground('#1e1e1e')"></div>
+                        <div class="color-ball color-green" onclick="changeBackground('#1e4620')"></div>
+                        <div class="color-ball color-sunset" onclick="changeBackground('#b85d32')"></div>
+                        <div class="color-ball color-default" onclick="changeBackground('image')">Wallpaper</div>
+                    </div>
+                </div>
             </div>
         </div>
 
