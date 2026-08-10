@@ -10,23 +10,31 @@
 
     <!-- Área de Trabalho -->
     <div id="desktop">
-        <div class="shortcut" onclick="openApp('notepad')">📝 Bloco de Notas</div>
         
-        <!-- Janela do Aplicativo -->
-        <div id="win-notepad" class="window" style="display: none;">
+        <!-- Ícone do Bloco de Notas -->
+        <div class="shortcut" onclick="openApp('notepad')">
+            <span class="shortcut-icon">📝</span>
+            <span>Bloco de Notas</span>
+        </div>
+        
+        <!-- Janela do Bloco de Notas -->
+        <div id="win-notepad" class="window" style="display: none; top: 15%; left: 20%;">
             <div class="window-header" id="win-notepad-header">
-                <span>Bloco de Notas</span>
-                <button onclick="closeApp('notepad')">X</button>
+                <span class="window-title">Bloco de Notas</span>
+                <div class="window-controls">
+                    <button class="close-btn" onclick="closeApp('notepad')">✕</button>
+                </div>
             </div>
             <div class="window-content">
-                <textarea placeholder="Digite algo aqui..."></textarea>
+                <textarea placeholder="Digite suas anotações aqui..."></textarea>
             </div>
         </div>
+
     </div>
 
     <!-- Barra de Tarefas -->
     <div id="taskbar">
-        <button id="start-menu-btn">🌐 Iniciar</button>
+        <button id="start-menu-btn">🌟 Iniciar</button>
     </div>
 
     <script src="script.js"></script>
