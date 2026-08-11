@@ -8,17 +8,17 @@
 </head>
 <body>
 
-    <!-- Área de Trabalho -->
-    <div id="desktop">
+    <!-- Área de Trabalho (Clicar nela vai fechar o Menu Iniciar) -->
+    <div id="desktop" onclick="closeStartMenuOutside(event)">
         
         <!-- Ícones da Área de Trabalho -->
         <div class="shortcut" onclick="openApp('notepad')">
-            <span class="shortcut-icon">📝</span>
+            <span class="shortcut-icon">N</span>
             <span>Bloco de Notas</span>
         </div>
 
         <div class="shortcut" onclick="openApp('settings')">
-            <span class="shortcut-icon">⚙️</span>
+            <span class="shortcut-icon">S</span>
             <span>Configurações</span>
         </div>
         
@@ -39,7 +39,8 @@
                 </div>
             </div>
             <div class="window-content">
-                <textarea placeholder="Digite suas anotações aqui..."></textarea>
+                <!-- Adicionado o evento oninput para salvar o texto digitado em tempo real -->
+                <textarea id="notepad-textarea" oninput="saveNoteText()" placeholder="Digite suas anotações aqui..."></textarea>
             </div>
         </div>
 
@@ -78,12 +79,26 @@
             </div>
         </div>
 
+        <!-- MENU INICIAR (Oculto por padrão no estilo do OS) -->
+        <div id="start-menu" class="start-menu-panel" style="display: none;">
+            <div class="start-menu-header">
+                <h4>SandBox-OS</h4>
+            </div>
+            <div class="start-menu-content">
+                <div class="start-menu-item" onclick="openAppFromStart('notepad')">📝 Bloco de Notas</div>
+                <div class="start-menu-item" onclick="openAppFromStart('settings')">⚙️ Configurações</div>
+            </div>
+            <div class="start-menu-footer">
+                <button class="restart-btn" onclick="clearSystemData()">🔄 Reiniciar OS</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Barra de Tarefas -->
     <div id="taskbar">
-        <button id="start-menu-btn">🌟 Iniciar</button>
-        <!-- Espaço onde os ícones dos apps abertos vão aparecer dinamicamente -->
+        <!-- Evento onclick atualizado para alternar a exibição do menu iniciar -->
+        <button id="start-menu-btn" onclick="toggleStartMenu(event)">🌟 Iniciar</button>
         <div id="taskbar-apps"></div>
     </div>
 
