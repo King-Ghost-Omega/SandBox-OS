@@ -8,17 +8,18 @@
 </head>
 <body>
 
-    <!-- Área de Trabalho (Clicar nela vai fechar o Menu Iniciar) -->
+    <!-- Área de Trabalho (Clicar nela fecha o Menu Iniciar) -->
     <div id="desktop" onclick="closeStartMenuOutside(event)">
         
-        <!-- Ícones da Área de Trabalho -->
+        <!-- Ícone do Bloco de Notas Restaurado -->
         <div class="shortcut" onclick="openApp('notepad')">
-            <span class="shortcut-icon">N</span>
+            <span class="shortcut-icon">📝</span>
             <span>Bloco de Notas</span>
         </div>
 
+        <!-- Ícone de Configurações Restaurado -->
         <div class="shortcut" onclick="openApp('settings')">
-            <span class="shortcut-icon">S</span>
+            <span class="shortcut-icon">⚙️</span>
             <span>Configurações</span>
         </div>
         
@@ -39,7 +40,6 @@
                 </div>
             </div>
             <div class="window-content">
-                <!-- Adicionado o evento oninput para salvar o texto digitado em tempo real -->
                 <textarea id="notepad-textarea" oninput="saveNoteText()" placeholder="Digite suas anotações aqui..."></textarea>
             </div>
         </div>
@@ -79,7 +79,7 @@
             </div>
         </div>
 
-        <!-- MENU INICIAR (Oculto por padrão no estilo do OS) -->
+        <!-- MENU INICIAR -->
         <div id="start-menu" class="start-menu-panel" style="display: none;">
             <div class="start-menu-header">
                 <h4>SandBox-OS</h4>
@@ -97,7 +97,6 @@
 
     <!-- Barra de Tarefas -->
     <div id="taskbar">
-        <!-- Evento onclick atualizado para alternar a exibição do menu iniciar -->
         <button id="start-menu-btn" onclick="toggleStartMenu(event)">🌟 Iniciar</button>
         <div id="taskbar-apps"></div>
     </div>
