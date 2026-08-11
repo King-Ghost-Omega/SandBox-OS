@@ -19,14 +19,13 @@ body, html {
     padding: 20px;
 }
 
-/* Ícones móveis precisam de position: absolute */
 .shortcut {
     position: absolute;
     width: 80px;
     height: 80px;
     color: white;
     text-align: center;
-    cursor: move; /* Feedback visual de mover */
+    cursor: move;
     font-size: 12px;
     display: flex;
     flex-direction: column;
@@ -38,7 +37,6 @@ body, html {
     transition: background 0.2s;
 }
 
-/* Posições iniciais padrão dos ícones se não houver dados salvos */
 #shortcut-notepad { top: 20px; left: 20px; }
 #shortcut-settings { top: 120px; left: 20px; }
 #shortcut-calc { top: 220px; left: 20px; }
@@ -216,7 +214,17 @@ textarea {
     border-radius: 8px;
 }
 
-/* --- NOVO: Estilo Visual da Calculadora --- */
+/* Estilo do botão de upload de fotos do PC */
+.color-upload {
+    background: #f1f1f1 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 2px dashed #bbb;
+}
+
 .calc-layout {
     display: flex;
     flex-direction: column;
@@ -229,7 +237,7 @@ textarea {
     width: 100%;
     height: 50px;
     background: #ffffff;
-    border: 1px solid #e0e0 e0;
+    border: 1px solid #e0e0e0;
     border-radius: 6px;
     text-align: right;
     padding: 0 12px;
@@ -283,11 +291,10 @@ textarea {
     background: #e1f5fe;
     color: #0288d1;
     border-color: #b3e5fc;
-    grid-row: span 2; /* Ocupa duas linhas igual ao Windows */
+    grid-row: span 2;
     height: 100%;
 }
 
-/* Menu Iniciar */
 .start-menu-panel {
     position: absolute;
     bottom: 10px;
@@ -384,6 +391,7 @@ textarea {
 #taskbar-apps {
     display: flex;
     gap: 8px;
+    flex: 1; /* Faz as abas ocuparem o espaço do meio, empurrando o relógio pra ponta */
 }
 
 .taskbar-button {
@@ -404,4 +412,28 @@ textarea {
 .taskbar-button.active {
     background: rgba(255, 255, 255, 0.3);
     border-bottom: 2px solid #2196F3;
+}
+
+/* --- NOVO: Estilo do Relógio na Barra de Tarefas --- */
+#taskbar-clock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    font-family: sans-serif;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: default;
+}
+
+#clock-time {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+#clock-date {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10px;
 }
