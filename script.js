@@ -1,9 +1,8 @@
 let highestZIndex = 10;
 const openAppsList = {}; 
 
-// Configuração da Grade Inteligente (Tamanho de cada bloco/hitbox de ícone)
-const gridX = 90; // Largura do espaço do ícone + espaçamento
-const gridY = 90; // Altura do espaço do ícone + espaçamento
+const gridX = 90; 
+const gridY = 90; 
 
 // Inicialização completa do sistema operacional
 function initializeOS() {
@@ -24,7 +23,6 @@ function initializeOS() {
         }
         makeShortcutDraggable(shortcut);
         
-        // 🔥 ATUALIZADO: Remove o onclick antigo do HTML e força o uso de DUPLO CLIQUE (ondblclick)
         shortcut.removeAttribute('onclick');
         shortcut.ondblclick = function(e) {
             e.stopPropagation();
@@ -32,10 +30,49 @@ function initializeOS() {
             openApp(appId);
         };
     });
+
+    // Inicia o motor do relógio e faz ele bater a cada 1 segundo
+    updateClockEngine();
+    setInterval(updateClockEngine, 1000);
 }
 setTimeout(initializeOS, 50);
 
-// --- 🛡️ ENGINE DE MOVER OS ÍCONES COM GRADE (SNAP TO GRID) ---
+// --- 🕒 MOTOR DO RELÓGIO E DATA ---
+function updateClockEngine() {
+    const timeEl = document.getElementById("clock-time");
+    const dateEl = document.getElementById("clock-date");
+    if (!timeEl || !dateEl) return;
+
+    const now = new Date();
+    
+    // Formata o tempo (HH:MM:SS) com dois dígitos
+    let hours = String(now.getHours()).padStart(2, '0');
+    let minutes = String(now.getMinutes()).padStart(2, '0');
+    let seconds = String(now.getSeconds()).padStart(2, '0');
+    timeEl.innerText = hours + ":" + minutes + ":" + seconds;
+
+    // Formata a data (DD/MM/AAAA) com dois dígitos
+    let day = String(now.getDate()).padStart(2, '0');
+    let month = String(now.getMonth() + 1).padStart(2, '0');
+    let year = now.getFullYear();
+    dateEl.innerText = day + "/" + month + "/" + year;
+}
+
+// --- 🎨 FUNÇÃO PARA CONVERTER E CARREGAR IMAGEM DO COMPUTADOR ---
+function uploadWallpaper(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Image = e.target.result;
+        // Salva a imagem convertida na memória do OS
+        changeBackground("url('" + base64Image + "')");
+    };
+    reader.readAsDataURL(file);
+}
+
+// --- 🛡️ ENGINE DE MOVER OS ÍCONES DA ÁREA DE TRABALHO ---
 function makeShortcutDraggable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     let isDragging = false;
@@ -44,10 +81,8 @@ function makeShortcutDraggable(elmnt) {
         e = e || window.event;
         e.stopPropagation();
         isDragging = false;
-        
         pos3 = e.clientX;
         pos4 = e.clientY;
-        
         document.onmouseup = closeDragShortcut;
         document.onmousemove = dragShortcut;
     };
@@ -56,23 +91,18 @@ function makeShortcutDraggable(elmnt) {
         e = e || window.event;
         e.preventDefault();
         isDragging = true;
-
         pos1 = pos3 - e.clientX;
         pos2 = pos4 - e.clientY;
         pos3 = e.clientX;
         pos4 = e.clientY;
-
         let newTop = elmnt.offsetTop - pos2;
         let newLeft = elmnt.offsetLeft - pos1;
-
-        // Limita os ícones dentro dos limites visíveis da Área de Trabalho
         const maxW = window.innerWidth - 85;
         const maxH = window.innerHeight - 130;
         if (newTop < 10) newTop = 10;
         if (newLeft < 10) newLeft = 10;
         if (newLeft > maxW) newLeft = maxW;
         if (newTop > maxH) newTop = maxH;
-
         elmnt.style.top = newTop + "px";
         elmnt.style.left = newLeft + "px";
     }
@@ -80,44 +110,33 @@ function makeShortcutDraggable(elmnt) {
     function closeDragShortcut() {
         document.onmouseup = null;
         document.onmousemove = null;
-        
         if (isDragging) {
-            // 🔥 SISTEMA DE HITBOX/GRADE: Arredonda a posição atual para o bloco mais próximo da grade
             let snappedLeft = Math.round((elmnt.offsetLeft - 10) / gridX) * gridX + 20;
             let snappedTop = Math.round((elmnt.offsetTop - 10) / gridY) * gridY + 20;
-
-            // Garante que o snap não jogue o ícone para fora da tela
-            const maxW = window.innerWidth - 85;
-            const maxH = window.innerHeight - 130;
-            if (snappedLeft > maxW) snappedLeft = Math.round(maxW / gridX) * gridX;
-            if (snappedTop > maxH) snappedTop = Math.round(maxH / gridY) * gridY;
-            if (snappedLeft < 20) snappedLeft = 20;
-            if (snappedTop < 20) snappedTop = 20;
-
-            // 🔥 EVITAR SOBREPOSIÇÃO: Verifica se já tem outro ícone ocupando essa exata hitbox/coordenada
-            document.querySelectorAll('.draggable-shortcut').forEach(function(otherShort) {
-                if (otherShort.id !== elmnt.id) {
-                    if (otherShort.style.left === snappedLeft + "px" && otherShort.style.top === snappedTop + "px") {
-                        // Se a vaga estiver ocupada, empurra para a linha de baixo na grade
-                        snappedTop += gridY;
+            let positionOccupied = true;
+            while (positionOccupied) {
+                positionOccupied = false;
+                const shortcuts = document.querySelectorAll('.draggable-shortcut');
+                for (let i = 0; i < shortcuts.length; i++) {
+                    const other = shortcuts[i];
+                    if (other.id !== elmnt.id) {
+                        if (other.style.left === snappedLeft + "px" && other.style.top === snappedTop + "px") {
+                            positionOccupied = true;
+                            break;
+                        }
                     }
                 }
-            });
-
-            // Aplica o alinhamento magnético final
+                if (positionOccupied) snappedTop += gridY;
+            }
+            const maxH = window.innerHeight - 130;
+            if (snappedTop > maxH) { snappedTop = 20; snappedLeft += gridX; }
             elmnt.style.left = snappedLeft + "px";
             elmnt.style.top = snappedTop + "px";
-
-            // Salva a posição final organizada na memória
-            localStorage.setItem("pos_" + elmnt.id, JSON.stringify({
-                top: elmnt.style.top,
-                left: elmnt.style.left
-            }));
+            localStorage.setItem("pos_" + elmnt.id, JSON.stringify({ top: elmnt.style.top, left: elmnt.style.left }));
         }
     }
 }
-
-// --- 🧮 ENGINE DE SEGURANÇA DA CALCULADORA ---
+// --- ENGINE DA CALCULADORA ---
 function pressCalcNum(num) {
     const screen = document.getElementById("calc-screen");
     if (screen) {
@@ -153,7 +172,7 @@ function calculateResult() {
     }
 }
 
-// --- CONTROLES GERAIS DAS JANELAS (WINDOW MANAGER) ---
+// --- CONTROLES DO BLOCCO DE NOTAS ---
 function saveNoteText() {
     const textarea = document.getElementById("notepad-textarea");
     if (textarea) localStorage.setItem("sandboxos_note_text", textarea.value);
@@ -171,6 +190,7 @@ function openApp(appId) {
     }
 }
 
+// --- GERENCIADOR FÍSICO DAS JANELAS (DRAG E RESIZE BORDAS) ---
 function makeDraggableAndResizable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     const header = document.getElementById(elmnt.id + "-header");
@@ -206,10 +226,7 @@ function makeDraggableAndResizable(elmnt) {
         elmnt.style.top = newTop + "px"; elmnt.style.left = newLeft + "px";
     }
 
-    function closeDragElement() { 
-        document.onmouseup = null; 
-        document.onmousemove = null; 
-    }
+    function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
 
     const resizeHandle = elmnt.querySelector('.window-resize-handle');
     if (resizeHandle) {
@@ -228,7 +245,6 @@ function makeDraggableAndResizable(elmnt) {
         };
     }
 }
-
 function closeApp(appId) {
     const win = document.getElementById("win-" + appId);
     if (win) {
@@ -274,7 +290,7 @@ function maximizeApp(appId) {
 function updateTaskbar() {
     const container = document.getElementById('taskbar-apps');
     if (!container) return;
-    container.innerHTML = '';
+    container.innerHTML = ''; 
     Object.keys(openAppsList).forEach(function(appId) {
         const btn = document.createElement('button');
         btn.id = "tb-" + appId;
@@ -326,7 +342,11 @@ function applyBackgroundLogic(colorOrType) {
     const desktop = document.getElementById('desktop');
     if (!desktop) return;
     if (colorOrType === 'image') {
-        desktop.style.background = "url('unsplash.com') no-repeat center center";
+        desktop.style.background = "url('https://unsplash.com') no-repeat center center";
+        desktop.style.backgroundSize = "cover";
+    } else if (colorOrType.startsWith("url(")) {
+        // Aplica a imagem em Base64 carregada do computador do usuário
+        desktop.style.background = colorOrType + " no-repeat center center";
         desktop.style.backgroundSize = "cover";
     } else {
         desktop.style.background = colorOrType;
