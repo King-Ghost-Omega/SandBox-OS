@@ -1,6 +1,10 @@
 let highestZIndex = 10;
 const openAppsList = {}; 
 
+// Configuração da Grade Inteligente (Tamanho de cada bloco/hitbox de ícone)
+const gridX = 90; // Largura do espaço do ícone + espaçamento
+const gridY = 90; // Altura do espaço do ícone + espaçamento
+
 // Inicialização completa do sistema operacional
 function initializeOS() {
     const savedBg = localStorage.getItem("sandboxos_bg");
@@ -19,24 +23,31 @@ function initializeOS() {
             shortcut.style.left = pos.left;
         }
         makeShortcutDraggable(shortcut);
+        
+        // 🔥 ATUALIZADO: Remove o onclick antigo do HTML e força o uso de DUPLO CLIQUE (ondblclick)
+        shortcut.removeAttribute('onclick');
+        shortcut.ondblclick = function(e) {
+            e.stopPropagation();
+            const appId = shortcut.id.replace('shortcut-', '');
+            openApp(appId);
+        };
     });
 }
 setTimeout(initializeOS, 50);
 
-// --- ENGINE DE MOVER OS ÍCONES DA ÁREA DE TRABALHO ---
+// --- 🛡️ ENGINE DE MOVER OS ÍCONES COM GRADE (SNAP TO GRID) ---
 function makeShortcutDraggable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    let startX = 0, startY = 0;
     let isDragging = false;
-    const threshold = 5; 
 
     elmnt.onmousedown = function(e) {
         e = e || window.event;
+        e.stopPropagation();
         isDragging = false;
-        startX = e.clientX;
-        startY = e.clientY;
+        
         pos3 = e.clientX;
         pos4 = e.clientY;
+        
         document.onmouseup = closeDragShortcut;
         document.onmousemove = dragShortcut;
     };
@@ -44,44 +55,69 @@ function makeShortcutDraggable(elmnt) {
     function dragShortcut(e) {
         e = e || window.event;
         e.preventDefault();
-        let deltaX = Math.abs(e.clientX - startX);
-        let deltaY = Math.abs(e.clientY - startY);
-        if (!isDragging && (deltaX > threshold || deltaY > threshold)) {
-            isDragging = true;
-        }
-        if (isDragging) {
-            pos1 = pos3 - e.clientX;
-            pos2 = pos4 - e.clientY;
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            let newTop = elmnt.offsetTop - pos2;
-            let newLeft = elmnt.offsetLeft - pos1;
-            const maxW = window.innerWidth - 85;
-            const maxH = window.innerHeight - 130;
-            if (newTop < 10) newTop = 10;
-            if (newLeft < 10) newLeft = 10;
-            if (newLeft > maxW) newLeft = maxW;
-            if (newTop > maxH) newTop = maxH;
-            elmnt.style.top = newTop + "px";
-            elmnt.style.left = newLeft + "px";
-        }
+        isDragging = true;
+
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        let newTop = elmnt.offsetTop - pos2;
+        let newLeft = elmnt.offsetLeft - pos1;
+
+        // Limita os ícones dentro dos limites visíveis da Área de Trabalho
+        const maxW = window.innerWidth - 85;
+        const maxH = window.innerHeight - 130;
+        if (newTop < 10) newTop = 10;
+        if (newLeft < 10) newLeft = 10;
+        if (newLeft > maxW) newLeft = maxW;
+        if (newTop > maxH) newTop = maxH;
+
+        elmnt.style.top = newTop + "px";
+        elmnt.style.left = newLeft + "px";
     }
 
     function closeDragShortcut() {
         document.onmouseup = null;
         document.onmousemove = null;
+        
         if (isDragging) {
+            // 🔥 SISTEMA DE HITBOX/GRADE: Arredonda a posição atual para o bloco mais próximo da grade
+            let snappedLeft = Math.round((elmnt.offsetLeft - 10) / gridX) * gridX + 20;
+            let snappedTop = Math.round((elmnt.offsetTop - 10) / gridY) * gridY + 20;
+
+            // Garante que o snap não jogue o ícone para fora da tela
+            const maxW = window.innerWidth - 85;
+            const maxH = window.innerHeight - 130;
+            if (snappedLeft > maxW) snappedLeft = Math.round(maxW / gridX) * gridX;
+            if (snappedTop > maxH) snappedTop = Math.round(maxH / gridY) * gridY;
+            if (snappedLeft < 20) snappedLeft = 20;
+            if (snappedTop < 20) snappedTop = 20;
+
+            // 🔥 EVITAR SOBREPOSIÇÃO: Verifica se já tem outro ícone ocupando essa exata hitbox/coordenada
+            document.querySelectorAll('.draggable-shortcut').forEach(function(otherShort) {
+                if (otherShort.id !== elmnt.id) {
+                    if (otherShort.style.left === snappedLeft + "px" && otherShort.style.top === snappedTop + "px") {
+                        // Se a vaga estiver ocupada, empurra para a linha de baixo na grade
+                        snappedTop += gridY;
+                    }
+                }
+            });
+
+            // Aplica o alinhamento magnético final
+            elmnt.style.left = snappedLeft + "px";
+            elmnt.style.top = snappedTop + "px";
+
+            // Salva a posição final organizada na memória
             localStorage.setItem("pos_" + elmnt.id, JSON.stringify({
                 top: elmnt.style.top,
                 left: elmnt.style.left
             }));
-            elmnt.style.pointerEvents = 'none';
-            setTimeout(() => elmnt.style.pointerEvents = 'auto', 50);
         }
     }
 }
 
-// --- ENGINE DE SEGURANÇA DA CALCULADORA ---
+// --- 🧮 ENGINE DE SEGURANÇA DA CALCULADORA ---
 function pressCalcNum(num) {
     const screen = document.getElementById("calc-screen");
     if (screen) {
@@ -135,7 +171,6 @@ function openApp(appId) {
     }
 }
 
-// Correção completa da função que estava quebrando no print
 function makeDraggableAndResizable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     const header = document.getElementById(elmnt.id + "-header");
@@ -239,7 +274,7 @@ function maximizeApp(appId) {
 function updateTaskbar() {
     const container = document.getElementById('taskbar-apps');
     if (!container) return;
-    container.innerHTML = ''; 
+    container.innerHTML = '';
     Object.keys(openAppsList).forEach(function(appId) {
         const btn = document.createElement('button');
         btn.id = "tb-" + appId;
