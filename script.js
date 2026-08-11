@@ -1,16 +1,23 @@
 let highestZIndex = 10;
 const openAppsList = {}; 
 
-// --- NOVO: Carregar o fundo salvo assim que o sistema inicia ---
-document.addEventListener("DOMContentLoaded", () => {
+// 🔥 CORREÇÃO DO SALVAMENTO: Tenta aplicar o fundo imediatamente e repete até o elemento existir
+function loadSavedBackground() {
     const savedBg = localStorage.getItem("sandboxos_bg");
     if (savedBg) {
-        applyBackgroundLogic(savedBg);
+        const desktop = document.getElementById('desktop');
+        if (desktop) {
+            applyBackgroundLogic(savedBg);
+        } else {
+            // Se o HTML ainda não carregou totalmente, tenta de novo em 50 milissegundos
+            setTimeout(loadSavedBackground, 50);
+        }
     }
-});
+}
+loadSavedBackground();
 
 function openApp(appId) {
-    const win = document.getElementById(`win-${appId}`);
+    const win = document.getElementById("win-" + appId);
     if (win) {
         win.style.display = 'flex';
         focusWindow(win);
@@ -23,7 +30,7 @@ function openApp(appId) {
 }
 
 function closeApp(appId) {
-    const win = document.getElementById(`win-${appId}`);
+    const win = document.getElementById("win-" + appId);
     if (win) {
         win.style.display = 'none';
         delete openAppsList[appId]; 
@@ -35,22 +42,24 @@ function focusWindow(elmnt) {
     highestZIndex++;
     elmnt.style.zIndex = highestZIndex;
     
-    document.querySelectorAll('.taskbar-button').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.getElementById(`tb-${elmnt.id.replace('win-', '')}`);
+    document.querySelectorAll('.taskbar-button').forEach(function(btn) {
+        btn.classList.remove('active');
+    });
+    const activeBtn = document.getElementById("tb-" + elmnt.id.replace('win-', ''));
     if (activeBtn) activeBtn.classList.add('active');
 }
 
 function minimizeApp(appId) {
-    const win = document.getElementById(`win-${appId}`);
+    const win = document.getElementById("win-" + appId);
     if (win) {
         win.style.display = 'none';
-        const activeBtn = document.getElementById(`tb-${appId}`);
+        const activeBtn = document.getElementById("tb-" + appId);
         if (activeBtn) activeBtn.classList.remove('active');
     }
 }
 
 function maximizeApp(appId) {
-    const win = document.getElementById(`win-${appId}`);
+    const win = document.getElementById("win-" + appId);
     if (!win) return;
 
     if (!openAppsList[appId].maximized) {
@@ -77,18 +86,19 @@ function maximizeApp(appId) {
 
 function updateTaskbar() {
     const container = document.getElementById('taskbar-apps');
+    if (!container) return;
     container.innerHTML = ''; 
     
-    Object.keys(openAppsList).forEach(appId => {
+    Object.keys(openAppsList).forEach(function(appId) {
         const btn = document.createElement('button');
-        btn.id = `tb-${appId}`;
+        btn.id = "tb-" + appId;
         btn.className = 'taskbar-button';
         
         const nameMap = { 'notepad': '📝 Bloco de Notas', 'settings': '⚙️ Configurações' };
         btn.innerText = nameMap[appId] || appId;
         
-        btn.onclick = () => {
-            const win = document.getElementById(`win-${appId}`);
+        btn.onclick = function() {
+            const win = document.getElementById("win-" + appId);
             if (win.style.display === 'none') {
                 win.style.display = 'flex';
                 focusWindow(win);
@@ -100,15 +110,14 @@ function updateTaskbar() {
     });
 }
 
-// --- ATUALIZADO: Função de fundo com salvamento automático ---
 function changeBackground(colorOrType) {
     applyBackgroundLogic(colorOrType);
-    localStorage.setItem("sandboxos_bg", colorOrType); // Salva no navegador do usuário
+    localStorage.setItem("sandboxos_bg", colorOrType);
 }
 
-// Função auxiliar para aplicar visual do fundo
 function applyBackgroundLogic(colorOrType) {
     const desktop = document.getElementById('desktop');
+    if (!desktop) return;
     if (colorOrType === 'image') {
         desktop.style.background = "url('https://unsplash.com') no-repeat center center";
         desktop.style.backgroundSize = "cover";
@@ -117,30 +126,26 @@ function applyBackgroundLogic(colorOrType) {
     }
 }
 
-document.querySelectorAll('.window').forEach(win => {
+// Inicializa os escutadores nas janelas existentes
+document.querySelectorAll('.window').forEach(function(win) {
     makeDraggableAndResizable(win);
-    win.addEventListener('mousedown', () => {
+    win.addEventListener('mousedown', function() {
         focusWindow(win);
     });
 });
 
-// --- ATUALIZADO: Mecânica de arrastar com travas perfeitas em todas as bordas ---
 function makeDraggableAndResizable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     
-    const dragTargets = [
-        document.getElementById(elmnt.id + "-header"),
-        elmnt.querySelector('.border-top'),
-        elmnt.querySelector('.border-bottom'),
-        elmnt.querySelector('.border-left'),
-        elmnt.querySelector('.border-right')
-    ];
+    // Vincula o arrastar ao cabeçalho principal
+    const header = document.getElementById(elmnt.id + "-header");
+    if (header) { header.onmousedown = dragMouseDown; }
 
-    dragTargets.forEach(target => {
-        if (target) {
-            target.onmousedown = dragMouseDown;
-        }
-    });
+    // Vincula o arrastar às bordas adicionais se elas existirem no HTML
+    const tBorder = elmnt.querySelector('.border-top'); if (tBorder) tBorder.onmousedown = dragMouseDown;
+    const bBorder = elmnt.querySelector('.border-bottom'); if (bBorder) bBorder.onmousedown = dragMouseDown;
+    const lBorder = elmnt.querySelector('.border-left'); if (lBorder) lBorder.onmousedown = dragMouseDown;
+    const rBorder = elmnt.querySelector('.border-right'); if (rBorder) rBorder.onmousedown = dragMouseDown;
 
     function dragMouseDown(e) {
         const appId = elmnt.id.replace('win-', '');
@@ -166,18 +171,19 @@ function makeDraggableAndResizable(elmnt) {
         let newTop = elmnt.offsetTop - pos2;
         let newLeft = elmnt.offsetLeft - pos1;
 
-        // Pega as dimensões da tela atual do usuário dinamicamente
         const desktopWidth = window.innerWidth;
-        const desktopHeight = window.innerHeight - 45; // Desconta a altura exata da barra de tarefas
+        const desktopHeight = window.innerHeight - 45; 
         
-        const winWidth = elmnt.offsetWidth;
-        const winHeight = elmnt.offsetHeight;
+        // 🔥 CORREÇÃO DE MEDIDA: Pega os tamanhos reais computados pelo navegador no instante exato do movimento
+        const rect = elmnt.getBoundingClientRect();
+        const winWidth = rect.width;
+        const winHeight = rect.height;
 
-        // 🛡️ SISTEMA DE TRAVAS INTELEGENTE (FÍSICA DO OS)
-        if (newTop < 0) newTop = 0; // Trava Superior
-        if (newLeft < 0) newLeft = 0; // Trava Esquerda
-        if (newLeft + winWidth > desktopWidth) newLeft = desktopWidth - winWidth; // Trava Direita
-        if (newTop + winHeight > desktopHeight) newTop = desktopHeight - winHeight; // Trava Inferior (Acima da Barra Geral)
+        // 🛡️ TRAVAS PERFEITAS EM TODAS AS BORDAS
+        if (newTop < 0) newTop = 0;
+        if (newLeft < 0) newLeft = 0;
+        if (newLeft + winWidth > desktopWidth) newLeft = desktopWidth - winWidth;
+        if (newTop + winHeight > desktopHeight) newTop = desktopHeight - winHeight;
 
         elmnt.style.top = newTop + "px";
         elmnt.style.left = newLeft + "px";
@@ -191,16 +197,16 @@ function makeDraggableAndResizable(elmnt) {
     // Sistema de Mudar o Tamanho (Resize)
     const resizeHandle = elmnt.querySelector('.window-resize-handle');
     if (resizeHandle) {
-        resizeHandle.onmousedown = (e) => {
+        resizeHandle.onmousedown = function(e) {
             e.preventDefault();
             e.stopPropagation(); 
             pos3 = e.clientX;
             pos4 = e.clientY;
-            document.onmouseup = () => {
+            document.onmouseup = function() {
                 document.onmouseup = null;
                 document.onmousemove = null;
             };
-            document.onmousemove = (e) => {
+            document.onmousemove = function(e) {
                 e.preventDefault();
                 let widthDiff = e.clientX - pos3;
                 let heightDiff = e.clientY - pos4;
