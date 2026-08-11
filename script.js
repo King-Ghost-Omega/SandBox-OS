@@ -1,37 +1,134 @@
 let highestZIndex = 10;
 const openAppsList = {}; 
 
-function loadSavedBackground() {
+// Carrega o fundo e posições salvas dos ícones ao iniciar
+function initializeOS() {
     const savedBg = localStorage.getItem("sandboxos_bg");
-    if (savedBg) {
-        const desktop = document.getElementById('desktop');
-        if (desktop) {
-            applyBackgroundLogic(savedBg);
-        } else {
-            setTimeout(loadSavedBackground, 50);
+    if (savedBg) applyBackgroundLogic(savedBg);
+
+    const savedText = localStorage.getItem("sandboxos_note_text");
+    const textarea = document.getElementById("notepad-textarea");
+    if (textarea) textarea.value = savedText || "";
+
+    // Restaura o posicionamento dos ícones da Área de Trabalho
+    document.querySelectorAll('.draggable-shortcut').forEach(function(shortcut) {
+        const coords = localStorage.getItem("pos_" + shortcut.id);
+        if (coords) {
+            const pos = JSON.parse(coords);
+            shortcut.style.top = pos.top;
+            shortcut.style.left = pos.left;
+        }
+        makeShortcutDraggable(shortcut);
+    });
+}
+setTimeout(initializeOS, 50);
+
+// --- 🛡️ ENGINE DE MOVER OS ÍCONES DA ÁREA DE TRABALHO ---
+function makeShortcutDraggable(elmnt) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    let isDragging = false;
+
+    elmnt.onmousedown = function(e) {
+        e = e || window.event;
+        // Permite abrir se for clique comum rápido, mas prepara o arrastar se segurar
+        isDragging = false;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragShortcut;
+        document.onmousemove = dragShortcut;
+    };
+
+    function dragShortcut(e) {
+        e = e || window.event;
+        e.preventDefault();
+        isDragging = true;
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        let newTop = elmnt.offsetTop - pos2;
+        let newLeft = elmnt.offsetLeft - pos1;
+
+        // Limita os ícones para não fugirem além da barra de tarefas ou do topo
+        const maxW = window.innerWidth - 85;
+        const maxH = window.innerHeight - 130;
+        if (newTop < 10) newTop = 10;
+        if (newLeft < 10) newLeft = 10;
+        if (newLeft > maxW) newLeft = maxW;
+        if (newTop > maxH) newTop = maxH;
+
+        elmnt.style.top = newTop + "px";
+        elmnt.style.left = newLeft + "px";
+    }
+
+    function closeDragShortcut() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+        
+        // Se arrastou, salva a nova posição na memória
+        if (isDragging) {
+            localStorage.setItem("pos_" + elmnt.id, JSON.stringify({
+                top: elmnt.style.top,
+                left: elmnt.style.left
+            }));
+            // Desativa temporariamente o clique do app para o ícone não abrir logo após soltar o mouse
+            elmnt.style.pointerEvents = 'none';
+            setTimeout(() => elmnt.style.pointerEvents = 'auto', 50);
         }
     }
 }
-loadSavedBackground();
 
-// --- NOVO: Carrega o texto do bloco de notas salvo se existir ---
-function loadSavedNote() {
-    const savedText = localStorage.getItem("sandboxos_note_text");
-    const textarea = document.getElementById("notepad-textarea");
-    if (textarea) {
-        textarea.value = savedText || "";
-    } else {
-        setTimeout(loadSavedNote, 50);
+// --- 🧮 ENGINE DE SEGURANÇA DA CALCULADORA ---
+function pressCalcNum(num) {
+    const screen = document.getElementById("calc-screen");
+    if (screen) {
+        if (screen.value === "0" || screen.value === "Erro") screen.value = "";
+        screen.value += num;
     }
 }
-loadSavedNote();
 
-// --- NOVO: Salva as notas em tempo real enquanto digita ---
+function pressCalcOp(op) {
+    const screen = document.getElementById("calc-screen");
+    if (!screen || screen.value === "Erro") return;
+
+    let currentVal = screen.value;
+    if (currentVal === "") return;
+
+    // Pega o último caractere digitado na tela
+    const lastChar = currentVal.slice(-1);
+    const operators = ['+', '-', '*', '/'];
+
+    // 🛡️ SISTEMA DE SEGURANÇA: Se o último caractere já for um sinal, impede o novo sinal repetido
+    if (operators.includes(lastChar)) {
+        return; // Ignora o clique completamente para evitar coisas como 1++1 ou 1+/1
+    }
+
+    screen.value += op; // Permite expressões completas como 1+1/2-5 se o caractere anterior for número
+}
+
+function clearCalc() {
+    const screen = document.getElementById("calc-screen");
+    if (screen) screen.value = "";
+}
+
+function calculateResult() {
+    const screen = document.getElementById("calc-screen");
+    if (!screen || screen.value === "") return;
+
+    try {
+        // executa a conta matemática segura da expressão digitada
+        let result = Function('"use strict";return (' + screen.value + ')')();
+        screen.value = result;
+    } catch (err) {
+        screen.value = "Erro";
+    }
+}
+
+// --- CONTROLES GERAIS DAS JANELAS ---
 function saveNoteText() {
     const textarea = document.getElementById("notepad-textarea");
-    if (textarea) {
-        localStorage.setItem("sandboxos_note_text", textarea.value);
-    }
+    if (textarea) localStorage.setItem("sandboxos_note_text", textarea.value);
 }
 
 function openApp(appId) {
@@ -60,9 +157,7 @@ function focusWindow(elmnt) {
     highestZIndex++;
     elmnt.style.zIndex = highestZIndex;
     
-    document.querySelectorAll('.taskbar-button').forEach(function(btn) {
-        btn.classList.remove('active');
-    });
+    document.querySelectorAll('.taskbar-button').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById("tb-" + elmnt.id.replace('win-', ''));
     if (activeBtn) activeBtn.classList.add('active');
 }
@@ -82,22 +177,13 @@ function maximizeApp(appId) {
 
     if (!openAppsList[appId].maximized) {
         openAppsList[appId].prevStyle = {
-            top: win.style.top,
-            left: win.style.left,
-            width: win.style.width,
-            height: win.style.height
+            top: win.style.top, left: win.style.left, width: win.style.width, height: win.style.height
         };
-        win.style.top = '0px';
-        win.style.left = '0px';
-        win.style.width = '100%';
-        win.style.height = 'calc(100vh - 45px)';
+        win.style.top = '0px'; win.style.left = '0px'; win.style.width = '100%'; win.style.height = 'calc(100vh - 45px)';
         openAppsList[appId].maximized = true;
     } else {
         const prev = openAppsList[appId].prevStyle;
-        win.style.top = prev.top;
-        win.style.left = prev.left;
-        win.style.width = prev.width;
-        win.style.height = prev.height;
+        win.style.top = prev.top; win.style.left = prev.left; win.style.width = prev.width; win.style.height = prev.height;
         openAppsList[appId].maximized = false;
     }
 }
@@ -112,7 +198,7 @@ function updateTaskbar() {
         btn.id = "tb-" + appId;
         btn.className = 'taskbar-button';
         
-        const nameMap = { 'notepad': '📝 Bloco de Notas', 'settings': '⚙️ Configurações' };
+        const nameMap = { 'notepad': '📝 Bloco de Notas', 'settings': '⚙️ Configurações', 'calc': '🧮 Calculadora' };
         btn.innerText = nameMap[appId] || appId;
         
         btn.onclick = function() {
@@ -128,34 +214,24 @@ function updateTaskbar() {
     });
 }
 
-// --- NOVO: Lógica do Menu Iniciar ---
 function toggleStartMenu(event) {
-    event.stopPropagation(); // Impede o clique de propagar para o desktop
+    event.stopPropagation();
     const menu = document.getElementById("start-menu");
-    if (menu) {
-        if (menu.style.display === "none") {
-            menu.style.display = "flex";
-        } else {
-            menu.style.display = "none";
-        }
-    }
+    if (menu) menu.style.display = (menu.style.display === "none") ? "flex" : "none";
 }
 
 function openAppFromStart(appId) {
     openApp(appId);
-    document.getElementById("start-menu").style.display = "none"; // Fecha o menu ao abrir o app
+    document.getElementById("start-menu").style.display = "none";
 }
 
 function closeStartMenuOutside(event) {
     const menu = document.getElementById("start-menu");
-    // Se o menu estiver aberto e o clique não foi dentro dele, fecha o menu
-    if (menu && menu.style.display === "flex") {
-        menu.style.display = "none";
-    }
+    if (menu && menu.style.display === "flex") menu.style.display = "none";
 }
 
 function clearSystemData() {
-    if (confirm("Deseja redefinir o sistema? Isso limpará o texto das notas e a cor de fundo.")) {
+    if (confirm("Deseja redefinir o sistema? Isso limpará todas as posições dos ícones, notas e cores.")) {
         localStorage.clear();
         window.location.reload();
     }
@@ -179,16 +255,13 @@ function applyBackgroundLogic(colorOrType) {
 
 document.querySelectorAll('.window').forEach(function(win) {
     makeDraggableAndResizable(win);
-    win.addEventListener('mousedown', function() {
-        focusWindow(win);
-    });
+    win.addEventListener('mousedown', () => focusWindow(win));
 });
 
 function makeDraggableAndResizable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
     const header = document.getElementById(elmnt.id + "-header");
-    if (header) { header.onmousedown = dragMouseDown; }
+    if (header) header.onmousedown = dragMouseDown;
 
     const tBorder = elmnt.querySelector('.border-top'); if (tBorder) tBorder.onmousedown = dragMouseDown;
     const bBorder = elmnt.querySelector('.border-bottom'); if (bBorder) bBorder.onmousedown = dragMouseDown;
@@ -198,7 +271,6 @@ function makeDraggableAndResizable(elmnt) {
     function dragMouseDown(e) {
         const appId = elmnt.id.replace('win-', '');
         if (openAppsList[appId] && openAppsList[appId].maximized) return;
-
         e = e || window.event;
         if(e.target.tagName === 'BUTTON') return; 
         e.preventDefault();
@@ -211,63 +283,6 @@ function makeDraggableAndResizable(elmnt) {
     function elementDrag(e) {
         e = e || window.event;
         e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-        
-        let newTop = elmnt.offsetTop - pos2;
-        let newLeft = elmnt.offsetLeft - pos1;
-
-        const desktopWidth = window.innerWidth;
-        const desktopHeight = window.innerHeight - 45; 
-        
+        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY;
+        let newTop = elmnt.offsetTop - pos2; let newLeft = elmnt.offsetLeft - pos1;
         const rect = elmnt.getBoundingClientRect();
-        const winWidth = rect.width;
-        const winHeight = rect.height;
-
-        if (newTop < 0) newTop = 0;
-        if (newLeft < 0) newLeft = 0;
-        if (newLeft + winWidth > desktopWidth) newLeft = desktopWidth - winWidth;
-        if (newTop + winHeight > desktopHeight) newTop = desktopHeight - winHeight;
-
-        elmnt.style.top = newTop + "px";
-        elmnt.style.left = newLeft + "px";
-    }
-
-    function closeDragElement() {
-        document.onmouseup = null;
-        document.onmousemove = null;
-    }
-
-    const resizeHandle = elmnt.querySelector('.window-resize-handle');
-    if (resizeHandle) {
-        resizeHandle.onmousedown = function(e) {
-            e.preventDefault();
-            e.stopPropagation(); 
-            pos3 = e.clientX;
-            pos4 = e.clientY;
-            document.onmouseup = function() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-            };
-            document.onmousemove = function(e) {
-                e.preventDefault();
-                let widthDiff = e.clientX - pos3;
-                let heightDiff = e.clientY - pos4;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                
-                let currentWidth = parseInt(window.getComputedStyle(elmnt).width);
-                let currentHeight = parseInt(window.getComputedStyle(elmnt).height);
-                
-                if (currentWidth + widthDiff > 250) {
-                    elmnt.style.width = (currentWidth + widthDiff) + "px";
-                }
-                if (currentHeight + heightDiff > 150) {
-                    elmnt.style.height = (currentHeight + heightDiff) + "px";
-                }
-            };
-        };
-    }
-}
