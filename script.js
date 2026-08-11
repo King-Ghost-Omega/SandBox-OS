@@ -1,7 +1,6 @@
 let highestZIndex = 10;
 const openAppsList = {}; 
 
-// 🔥 CORREÇÃO DO SALVAMENTO: Tenta aplicar o fundo imediatamente e repete até o elemento existir
 function loadSavedBackground() {
     const savedBg = localStorage.getItem("sandboxos_bg");
     if (savedBg) {
@@ -9,12 +8,31 @@ function loadSavedBackground() {
         if (desktop) {
             applyBackgroundLogic(savedBg);
         } else {
-            // Se o HTML ainda não carregou totalmente, tenta de novo em 50 milissegundos
             setTimeout(loadSavedBackground, 50);
         }
     }
 }
 loadSavedBackground();
+
+// --- NOVO: Carrega o texto do bloco de notas salvo se existir ---
+function loadSavedNote() {
+    const savedText = localStorage.getItem("sandboxos_note_text");
+    const textarea = document.getElementById("notepad-textarea");
+    if (textarea) {
+        textarea.value = savedText || "";
+    } else {
+        setTimeout(loadSavedNote, 50);
+    }
+}
+loadSavedNote();
+
+// --- NOVO: Salva as notas em tempo real enquanto digita ---
+function saveNoteText() {
+    const textarea = document.getElementById("notepad-textarea");
+    if (textarea) {
+        localStorage.setItem("sandboxos_note_text", textarea.value);
+    }
+}
 
 function openApp(appId) {
     const win = document.getElementById("win-" + appId);
@@ -110,6 +128,39 @@ function updateTaskbar() {
     });
 }
 
+// --- NOVO: Lógica do Menu Iniciar ---
+function toggleStartMenu(event) {
+    event.stopPropagation(); // Impede o clique de propagar para o desktop
+    const menu = document.getElementById("start-menu");
+    if (menu) {
+        if (menu.style.display === "none") {
+            menu.style.display = "flex";
+        } else {
+            menu.style.display = "none";
+        }
+    }
+}
+
+function openAppFromStart(appId) {
+    openApp(appId);
+    document.getElementById("start-menu").style.display = "none"; // Fecha o menu ao abrir o app
+}
+
+function closeStartMenuOutside(event) {
+    const menu = document.getElementById("start-menu");
+    // Se o menu estiver aberto e o clique não foi dentro dele, fecha o menu
+    if (menu && menu.style.display === "flex") {
+        menu.style.display = "none";
+    }
+}
+
+function clearSystemData() {
+    if (confirm("Deseja redefinir o sistema? Isso limpará o texto das notas e a cor de fundo.")) {
+        localStorage.clear();
+        window.location.reload();
+    }
+}
+
 function changeBackground(colorOrType) {
     applyBackgroundLogic(colorOrType);
     localStorage.setItem("sandboxos_bg", colorOrType);
@@ -126,7 +177,6 @@ function applyBackgroundLogic(colorOrType) {
     }
 }
 
-// Inicializa os escutadores nas janelas existentes
 document.querySelectorAll('.window').forEach(function(win) {
     makeDraggableAndResizable(win);
     win.addEventListener('mousedown', function() {
@@ -137,11 +187,9 @@ document.querySelectorAll('.window').forEach(function(win) {
 function makeDraggableAndResizable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     
-    // Vincula o arrastar ao cabeçalho principal
     const header = document.getElementById(elmnt.id + "-header");
     if (header) { header.onmousedown = dragMouseDown; }
 
-    // Vincula o arrastar às bordas adicionais se elas existirem no HTML
     const tBorder = elmnt.querySelector('.border-top'); if (tBorder) tBorder.onmousedown = dragMouseDown;
     const bBorder = elmnt.querySelector('.border-bottom'); if (bBorder) bBorder.onmousedown = dragMouseDown;
     const lBorder = elmnt.querySelector('.border-left'); if (lBorder) lBorder.onmousedown = dragMouseDown;
@@ -174,12 +222,10 @@ function makeDraggableAndResizable(elmnt) {
         const desktopWidth = window.innerWidth;
         const desktopHeight = window.innerHeight - 45; 
         
-        // 🔥 CORREÇÃO DE MEDIDA: Pega os tamanhos reais computados pelo navegador no instante exato do movimento
         const rect = elmnt.getBoundingClientRect();
         const winWidth = rect.width;
         const winHeight = rect.height;
 
-        // 🛡️ TRAVAS PERFEITAS EM TODAS AS BORDAS
         if (newTop < 0) newTop = 0;
         if (newLeft < 0) newLeft = 0;
         if (newLeft + winWidth > desktopWidth) newLeft = desktopWidth - winWidth;
@@ -194,7 +240,6 @@ function makeDraggableAndResizable(elmnt) {
         document.onmousemove = null;
     }
 
-    // Sistema de Mudar o Tamanho (Resize)
     const resizeHandle = elmnt.querySelector('.window-resize-handle');
     if (resizeHandle) {
         resizeHandle.onmousedown = function(e) {
