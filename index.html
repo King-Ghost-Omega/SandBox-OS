@@ -12,18 +12,17 @@
     <div id="desktop" onclick="closeStartMenuOutside(event)">
         
         <!-- Ícones Móveis da Área de Trabalho -->
-        <div id="shortcut-notepad" class="shortcut draggable-shortcut" onclick="openApp('notepad')">
+        <div id="shortcut-notepad" class="shortcut draggable-shortcut">
             <span class="shortcut-icon">📝</span>
             <span>Bloco de Notas</span>
         </div>
 
-        <div id="shortcut-settings" class="shortcut draggable-shortcut" onclick="openApp('settings')">
+        <div id="shortcut-settings" class="shortcut draggable-shortcut">
             <span class="shortcut-icon">⚙️</span>
             <span>Configurações</span>
         </div>
 
-        <!-- NOVO: Ícone da Calculadora -->
-        <div id="shortcut-calc" class="shortcut draggable-shortcut" onclick="openApp('calc')">
+        <div id="shortcut-calc" class="shortcut draggable-shortcut">
             <span class="shortcut-icon">🧮</span>
             <span>Calculadora</span>
         </div>
@@ -71,7 +70,7 @@
                 </div>
                 <div class="settings-body">
                     <h3>Cor de Fundo</h3>
-                    <p>Escolha uma cor ou restaure o papel de parede:</p>
+                    <p>Escolha uma cor ou envie uma imagem do seu PC:</p>
                     <div class="color-picker-grid">
                         <div class="color-ball color-blue" onclick="changeBackground('#2a4d69')"></div>
                         <div class="color-ball color-purple" onclick="changeBackground('#4b357a')"></div>
@@ -79,12 +78,17 @@
                         <div class="color-ball color-green" onclick="changeBackground('#1e4620')"></div>
                         <div class="color-ball color-sunset" onclick="changeBackground('#b85d32')"></div>
                         <div class="color-ball color-default" onclick="changeBackground('image')"></div>
+                        
+                        <!-- Botão de Upload Customizado -->
+                        <label for="wallpaper-upload" class="color-ball color-upload">📁
+                            <input type="file" id="wallpaper-upload" accept="image/*" onchange="uploadWallpaper(event)" style="display: none;">
+                        </label>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- NOVO: Janela da Calculadora -->
+        <!-- Janela: Calculadora -->
         <div id="win-calc" class="window" style="display: none; top: 25%; left: 40%; width: 280px; height: 380px;">
             <div class="window-drag-border border-top"></div>
             <div class="window-drag-border border-bottom"></div>
@@ -101,9 +105,7 @@
                 </div>
             </div>
             <div class="window-content calc-layout">
-                <!-- Tela da calculadora -->
                 <input type="text" id="calc-screen" readonly placeholder="0">
-                <!-- Teclado numérico e operadores -->
                 <div class="calc-buttons-grid">
                     <button class="btn-clear" onclick="clearCalc()">C</button>
                     <button class="btn-op" onclick="pressCalcOp('/')">/</button>
@@ -118,7 +120,7 @@
                     <button onclick="pressCalcNum('4')">4</button>
                     <button onclick="pressCalcNum('5')">5</button>
                     <button onclick="pressCalcNum('6')">6</button>
-                    <button class="btn-equal" onclick="calculateResult()">=</button>
+                    <button class="btn-equal" onclick="calculateResult('=')">=</button>
                     
                     <button onclick="pressCalcNum('1')">1</button>
                     <button onclick="pressCalcNum('2')">2</button>
@@ -139,7 +141,7 @@
                 <div class="start-menu-item" onclick="openAppFromStart('calc')">🧮 Calculadora</div>
             </div>
             <div class="start-menu-footer">
-                <button class="restart-btn" onclick="clearSystemData()">Reiniciar OS</button>
+                <button class="restart-btn" onclick="clearSystemData()">🔄 Reiniciar OS</button>
             </div>
         </div>
 
@@ -147,8 +149,14 @@
 
     <!-- Barra de Tarefas -->
     <div id="taskbar">
-        <button id="start-menu-btn" onclick="toggleStartMenu(event)">Iniciar</button>
+        <button id="start-menu-btn" onclick="toggleStartMenu(event)">🌟 Iniciar</button>
         <div id="taskbar-apps"></div>
+        
+        <!-- Bloco do Relógio e Data adicionado ao final -->
+        <div id="taskbar-clock">
+            <div id="clock-time">00:00:00</div>
+            <div id="clock-date">01/01/2026</div>
+        </div>
     </div>
 
     <script src="script.js"></script>
