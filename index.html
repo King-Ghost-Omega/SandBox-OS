@@ -8,19 +8,24 @@
 </head>
 <body>
 
-    <!-- Área de Trabalho (Clicar nela fecha o Menu Iniciar) -->
+    <!-- Área de Trabalho -->
     <div id="desktop" onclick="closeStartMenuOutside(event)">
         
-        <!-- Ícone do Bloco de Notas Restaurado -->
-        <div class="shortcut" onclick="openApp('notepad')">
+        <!-- Ícones Móveis da Área de Trabalho -->
+        <div id="shortcut-notepad" class="shortcut draggable-shortcut" onclick="openApp('notepad')">
             <span class="shortcut-icon">📝</span>
             <span>Bloco de Notas</span>
         </div>
 
-        <!-- Ícone de Configurações Restaurado -->
-        <div class="shortcut" onclick="openApp('settings')">
+        <div id="shortcut-settings" class="shortcut draggable-shortcut" onclick="openApp('settings')">
             <span class="shortcut-icon">⚙️</span>
             <span>Configurações</span>
+        </div>
+
+        <!-- NOVO: Ícone da Calculadora -->
+        <div id="shortcut-calc" class="shortcut draggable-shortcut" onclick="openApp('calc')">
+            <span class="shortcut-icon">🧮</span>
+            <span>Calculadora</span>
         </div>
         
         <!-- Janela: Bloco de Notas -->
@@ -79,6 +84,50 @@
             </div>
         </div>
 
+        <!-- NOVO: Janela da Calculadora -->
+        <div id="win-calc" class="window" style="display: none; top: 25%; left: 40%; width: 280px; height: 380px;">
+            <div class="window-drag-border border-top"></div>
+            <div class="window-drag-border border-bottom"></div>
+            <div class="window-drag-border border-left"></div>
+            <div class="window-drag-border border-right"></div>
+            <div class="window-resize-handle"></div>
+
+            <div class="window-header" id="win-calc-header">
+                <span class="window-title">Calculadora</span>
+                <div class="window-controls">
+                    <button onclick="minimizeApp('calc')">🗕</button>
+                    <button onclick="maximizeApp('calc')">🗖</button>
+                    <button class="close-btn" onclick="closeApp('calc')">✕</button>
+                </div>
+            </div>
+            <div class="window-content calc-layout">
+                <!-- Tela da calculadora -->
+                <input type="text" id="calc-screen" readonly placeholder="0">
+                <!-- Teclado numérico e operadores -->
+                <div class="calc-buttons-grid">
+                    <button class="btn-clear" onclick="clearCalc()">C</button>
+                    <button class="btn-op" onclick="pressCalcOp('/')">/</button>
+                    <button class="btn-op" onclick="pressCalcOp('*')">*</button>
+                    <button class="btn-op" onclick="pressCalcOp('-')">-</button>
+                    
+                    <button onclick="pressCalcNum('7')">7</button>
+                    <button onclick="pressCalcNum('8')">8</button>
+                    <button onclick="pressCalcNum('9')">9</button>
+                    <button class="btn-op" onclick="pressCalcOp('+')">+</button>
+                    
+                    <button onclick="pressCalcNum('4')">4</button>
+                    <button onclick="pressCalcNum('5')">5</button>
+                    <button onclick="pressCalcNum('6')">6</button>
+                    <button class="btn-equal" onclick="calculateResult()">=</button>
+                    
+                    <button onclick="pressCalcNum('1')">1</button>
+                    <button onclick="pressCalcNum('2')">2</button>
+                    <button onclick="pressCalcNum('3')">3</button>
+                    <button onclick="pressCalcNum('0')">0</button>
+                </div>
+            </div>
+        </div>
+
         <!-- MENU INICIAR -->
         <div id="start-menu" class="start-menu-panel" style="display: none;">
             <div class="start-menu-header">
@@ -87,6 +136,7 @@
             <div class="start-menu-content">
                 <div class="start-menu-item" onclick="openAppFromStart('notepad')">📝 Bloco de Notas</div>
                 <div class="start-menu-item" onclick="openAppFromStart('settings')">⚙️ Configurações</div>
+                <div class="start-menu-item" onclick="openAppFromStart('calc')">🧮 Calculadora</div>
             </div>
             <div class="start-menu-footer">
                 <button class="restart-btn" onclick="clearSystemData()">Reiniciar OS</button>
