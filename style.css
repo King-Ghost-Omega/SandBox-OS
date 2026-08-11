@@ -49,7 +49,6 @@ body, html {
     font-size: 32px;
 }
 
-/* Estrutura Base Avançada das Janelas */
 .window {
     position: absolute;
     background: rgba(255, 255, 255, 0.98);
@@ -58,7 +57,7 @@ body, html {
     box-shadow: 0px 8px 24px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
-    overflow: visible; /* Necessário para as bordas de resize e drag funcionarem nas pontas */
+    overflow: visible;
 }
 
 .window-header {
@@ -116,7 +115,6 @@ textarea {
     font-size: 14px;
 }
 
-/* Zonas Invisíveis para Arrastar pelas Laterais */
 .window-drag-border {
     position: absolute;
     background: transparent;
@@ -127,7 +125,6 @@ textarea {
 .border-left { left: -4px; top: 4px; bottom: 4px; width: 8px; cursor: move; }
 .border-right { right: -4px; top: 4px; bottom: 4px; width: 8px; cursor: move; }
 
-/* Puxador da Pontinha Inferior Direita para Redimensionar (Tamanho) */
 .window-resize-handle {
     position: absolute;
     right: -2px;
@@ -139,7 +136,6 @@ textarea {
     background: transparent;
 }
 
-/* Layout de Configurações */
 .settings-layout {
     display: flex;
     padding: 0;
@@ -185,7 +181,6 @@ textarea {
     margin-bottom: 15px;
 }
 
-/* Grade do Seletor de Cores Corrigida */
 .color-picker-grid {
     display: flex;
     gap: 15px;
@@ -201,7 +196,7 @@ textarea {
     border: 2px solid rgba(0,0,0,0.1);
     transition: transform 0.2s, border-color 0.2s;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    display: block; /* Garante visibilidade */
+    display: block;
 }
 
 .color-ball:hover {
@@ -219,7 +214,78 @@ textarea {
     border-radius: 8px;
 }
 
-/* Barra de Tarefas e Sistema de Minimizar */
+/* --- NOVO: Estilo Visual do Menu Iniciar --- */
+.start-menu-panel {
+    position: absolute;
+    bottom: 10px; /* Levemente flutuando acima da barra de tarefas */
+    left: 10px;
+    width: 300px;
+    height: 400px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    z-index: 9999999; /* Fica acima das janelas comuns */
+    overflow: hidden;
+}
+
+.start-menu-header {
+    background: #f3f3f3;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #333;
+}
+
+.start-menu-content {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+}
+
+.start-menu-item {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.start-menu-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.start-menu-footer {
+    background: #f3f3f3;
+    padding: 10px 15px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.restart-btn {
+    background: #e14d4d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.restart-btn:hover {
+    background: #c93b3b;
+}
+
+/* Barra de Tarefas */
 #taskbar {
     height: 45px;
     background: rgba(32, 32, 32, 0.85);
@@ -240,6 +306,10 @@ textarea {
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
+}
+
+#start-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 #taskbar-apps {
