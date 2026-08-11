@@ -1,5 +1,13 @@
 let highestZIndex = 10;
-const openAppsList = {}; // Monitora o estado de cada app aberto
+const openAppsList = {}; 
+
+// --- NOVO: Carregar o fundo salvo assim que o sistema inicia ---
+document.addEventListener("DOMContentLoaded", () => {
+    const savedBg = localStorage.getItem("sandboxos_bg");
+    if (savedBg) {
+        applyBackgroundLogic(savedBg);
+    }
+});
 
 function openApp(appId) {
     const win = document.getElementById(`win-${appId}`);
@@ -7,7 +15,6 @@ function openApp(appId) {
         win.style.display = 'flex';
         focusWindow(win);
         
-        // Se o app não estiver registrado na barra de tarefas, registra agora
         if (!openAppsList[appId]) {
             openAppsList[appId] = { maximized: false, prevStyle: {} };
             updateTaskbar();
@@ -19,7 +26,7 @@ function closeApp(appId) {
     const win = document.getElementById(`win-${appId}`);
     if (win) {
         win.style.display = 'none';
-        delete openAppsList[appId]; // Remove do registro
+        delete openAppsList[appId]; 
         updateTaskbar();
     }
 }
@@ -28,13 +35,11 @@ function focusWindow(elmnt) {
     highestZIndex++;
     elmnt.style.zIndex = highestZIndex;
     
-    // Atualiza o visual do botão ativo na barra de tarefas
     document.querySelectorAll('.taskbar-button').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById(`tb-${elmnt.id.replace('win-', '')}`);
     if (activeBtn) activeBtn.classList.add('active');
 }
 
-// Sistema de Minimizar
 function minimizeApp(appId) {
     const win = document.getElementById(`win-${appId}`);
     if (win) {
@@ -44,13 +49,11 @@ function minimizeApp(appId) {
     }
 }
 
-// Sistema de Maximizar / Expandir total
 function maximizeApp(appId) {
     const win = document.getElementById(`win-${appId}`);
     if (!win) return;
 
     if (!openAppsList[appId].maximized) {
-        // Guarda o tamanho e posição antiga antes de expandir tudo
         openAppsList[appId].prevStyle = {
             top: win.style.top,
             left: win.style.left,
@@ -63,7 +66,6 @@ function maximizeApp(appId) {
         win.style.height = 'calc(100vh - 45px)';
         openAppsList[appId].maximized = true;
     } else {
-        // Restaura tamanho antigo
         const prev = openAppsList[appId].prevStyle;
         win.style.top = prev.top;
         win.style.left = prev.left;
@@ -73,17 +75,15 @@ function maximizeApp(appId) {
     }
 }
 
-// Atualiza os botões dinamicamente no rodapé do OS
 function updateTaskbar() {
     const container = document.getElementById('taskbar-apps');
-    container.innerHTML = ''; // Limpa botões antigos
+    container.innerHTML = ''; 
     
     Object.keys(openAppsList).forEach(appId => {
         const btn = document.createElement('button');
         btn.id = `tb-${appId}`;
         btn.className = 'taskbar-button';
         
-        // Traduz ID técnico para nome amigável
         const nameMap = { 'notepad': '📝 Bloco de Notas', 'settings': '⚙️ Configurações' };
         btn.innerText = nameMap[appId] || appId;
         
@@ -100,7 +100,14 @@ function updateTaskbar() {
     });
 }
 
+// --- ATUALIZADO: Função de fundo com salvamento automático ---
 function changeBackground(colorOrType) {
+    applyBackgroundLogic(colorOrType);
+    localStorage.setItem("sandboxos_bg", colorOrType); // Salva no navegador do usuário
+}
+
+// Função auxiliar para aplicar visual do fundo
+function applyBackgroundLogic(colorOrType) {
     const desktop = document.getElementById('desktop');
     if (colorOrType === 'image') {
         desktop.style.background = "url('https://unsplash.com') no-repeat center center";
@@ -110,7 +117,6 @@ function changeBackground(colorOrType) {
     }
 }
 
-// Configura o sistema de cliques e comportamentos para todas as janelas
 document.querySelectorAll('.window').forEach(win => {
     makeDraggableAndResizable(win);
     win.addEventListener('mousedown', () => {
@@ -118,11 +124,10 @@ document.querySelectorAll('.window').forEach(win => {
     });
 });
 
-// Mecânica Completa: Arrastar por qualquer Lateral e Mudar Tamanho pela Pontinha
+// --- ATUALIZADO: Mecânica de arrastar com travas perfeitas em todas as bordas ---
 function makeDraggableAndResizable(elmnt) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     
-    // 1. Vincula o evento de arrastar tanto ao Header quanto a QUALQUER uma das 4 bordas laterais
     const dragTargets = [
         document.getElementById(elmnt.id + "-header"),
         elmnt.querySelector('.border-top'),
@@ -138,12 +143,11 @@ function makeDraggableAndResizable(elmnt) {
     });
 
     function dragMouseDown(e) {
-        // Impede arrastar se o app estiver maximizado tela cheia
         const appId = elmnt.id.replace('win-', '');
         if (openAppsList[appId] && openAppsList[appId].maximized) return;
 
         e = e || window.event;
-        if(e.target.tagName === 'BUTTON') return; // Não arrasta se clicar nos botões de controle
+        if(e.target.tagName === 'BUTTON') return; 
         e.preventDefault();
         pos3 = e.clientX;
         pos4 = e.clientY;
@@ -162,8 +166,18 @@ function makeDraggableAndResizable(elmnt) {
         let newTop = elmnt.offsetTop - pos2;
         let newLeft = elmnt.offsetLeft - pos1;
 
-        // Impede que o usuário suma com a janela completamente para cima da tela
-        if (newTop < 0) newTop = 0;
+        // Pega as dimensões da tela atual do usuário dinamicamente
+        const desktopWidth = window.innerWidth;
+        const desktopHeight = window.innerHeight - 45; // Desconta a altura exata da barra de tarefas
+        
+        const winWidth = elmnt.offsetWidth;
+        const winHeight = elmnt.offsetHeight;
+
+        // 🛡️ SISTEMA DE TRAVAS INTELEGENTE (FÍSICA DO OS)
+        if (newTop < 0) newTop = 0; // Trava Superior
+        if (newLeft < 0) newLeft = 0; // Trava Esquerda
+        if (newLeft + winWidth > desktopWidth) newLeft = desktopWidth - winWidth; // Trava Direita
+        if (newTop + winHeight > desktopHeight) newTop = desktopHeight - winHeight; // Trava Inferior (Acima da Barra Geral)
 
         elmnt.style.top = newTop + "px";
         elmnt.style.left = newLeft + "px";
@@ -174,12 +188,12 @@ function makeDraggableAndResizable(elmnt) {
         document.onmousemove = null;
     }
 
-    // 2. Sistema de Mudar o Tamanho (Resize) puxando o cantinho inferior direito
+    // Sistema de Mudar o Tamanho (Resize)
     const resizeHandle = elmnt.querySelector('.window-resize-handle');
     if (resizeHandle) {
         resizeHandle.onmousedown = (e) => {
             e.preventDefault();
-            e.stopPropagation(); // Evita ativar o arrastar junto
+            e.stopPropagation(); 
             pos3 = e.clientX;
             pos4 = e.clientY;
             document.onmouseup = () => {
@@ -196,7 +210,6 @@ function makeDraggableAndResizable(elmnt) {
                 let currentWidth = parseInt(window.getComputedStyle(elmnt).width);
                 let currentHeight = parseInt(window.getComputedStyle(elmnt).height);
                 
-                // Define limites mínimos de tamanho (250x150) para a janela não quebrar
                 if (currentWidth + widthDiff > 250) {
                     elmnt.style.width = (currentWidth + widthDiff) + "px";
                 }
